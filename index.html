@@ -23,173 +23,119 @@ header {
 }
 header h1 { font-size: 1.3rem; letter-spacing: 0.1em; text-transform: uppercase; flex: 1; }
 
-/* Bottom controls bar */
 .controls {
-  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
-  z-index: 999; display: flex; gap: 1rem; align-items: center;
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  z-index: 999; transition: opacity 0.3s;
 }
-
-.btn {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.75rem 1.4rem; border-radius: 30px; border: none;
-  font-size: 0.85rem; font-weight: 600; cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  letter-spacing: 0.05em;
-}
-.btn:hover { transform: scale(1.05); }
-
-.btn-play {
-  background: #00d4ff; color: #000;
-  box-shadow: 0 0 20px rgba(0,212,255,0.4);
-}
-.btn-play:hover { box-shadow: 0 0 30px rgba(0,212,255,0.7); }
+.controls.hidden { opacity: 0; pointer-events: none; }
 
 .btn-vr {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+  font-size: 0.8rem; font-weight: 600; cursor: pointer;
   background: rgba(255,255,255,0.1); color: white;
-  border: 1px solid rgba(255,255,255,0.2);
   backdrop-filter: blur(10px);
+  transition: background 0.2s;
 }
 .btn-vr:hover { background: rgba(255,255,255,0.2); }
-.btn-vr.active { background: #ff6b35; border-color: #ff6b35; color: white; box-shadow: 0 0 20px rgba(255,107,53,0.4); }
 
-/* Play overlay */
-#play-overlay {
-  position: fixed; inset: 0; z-index: 100;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: rgba(8,12,20,0.92); cursor: pointer; transition: opacity 0.4s;
-}
-#play-overlay.hidden { opacity: 0; pointer-events: none; }
-
-.big-play-btn {
-  width: 100px; height: 100px; border-radius: 50%; background: #00d4ff;
-  display: flex; align-items: center; justify-content: center; margin-bottom: 1.2rem;
-  box-shadow: 0 0 60px rgba(0,212,255,0.5); transition: transform 0.2s;
-}
-.big-play-btn:hover { transform: scale(1.1); }
-.big-play-btn svg { width: 40px; height: 40px; fill: #000; margin-left: 8px; }
-
-#play-overlay h2 { font-size: 1.8rem; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
-#play-overlay p { color: rgba(255,255,255,0.5); font-size: 0.9rem; }
-
-/* VR split hint */
-.hint-bar {
+/* Landscape hint */
+#landscape-hint {
   position: fixed; top: 5rem; left: 50%; transform: translateX(-50%);
-  z-index: 999; background: rgba(255,107,53,0.15); border: 1px solid rgba(255,107,53,0.4);
-  border-radius: 20px; padding: 0.4rem 1.2rem; font-size: 0.78rem; color: #ff6b35;
-  display: none;
+  z-index: 999; background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 20px; padding: 0.4rem 1.2rem; font-size: 0.78rem; color: #00d4ff;
+  transition: opacity 0.5s;
 }
-.hint-bar.visible { display: block; }
+#landscape-hint.hidden { opacity: 0; pointer-events: none; }
 
 a-scene { height: 100vh !important; }
+.a-enter-vr-button { display: none !important; }
 ```
 
   </style>
 </head>
 <body>
 
-  <header>
+  <header id="header">
     <span class="badge">360°</span>
     <h1>Immersive Experience</h1>
   </header>
 
-  <div class="hint-bar" id="vrHint">🥽 VR modus actief — gebruik een VR bril voor het beste effect</div>
+  <div id="landscape-hint">📱 Draai je telefoon voor VR modus</div>
 
-  <!-- Start overlay -->
-
-  <div id="play-overlay">
-    <div class="big-play-btn" onclick="startVideo()">
-      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-    </div>
-    <h2>360° Experience</h2>
-    <p>Klik om te starten en rond te kijken</p>
-  </div>
-
-  <!-- Knoppen onderaan -->
-
-  <div class="controls">
-    <button class="btn btn-play" id="playPauseBtn" onclick="togglePlay()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-      Pauzeer
-    </button>
-    <button class="btn btn-vr" id="vrBtn" onclick="toggleVR()">
+  <div class="controls" id="controls">
+    <button class="btn-vr" id="vrBtn" onclick="toggleVR()">
       🥽 VR Modus
     </button>
   </div>
 
-  <a-scene id="scene" vr-mode-ui="enabled: true">
+  <a-scene id="scene" vr-mode-ui="enabled: false">
     <a-assets>
-      <video id="video360" src="Nog.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
+      <video id="video360" src="Nog.mp4" autoplay loop crossorigin="anonymous" playsinline webkit-playsinline></video>
     </a-assets>
     <a-videosphere src="#video360" rotation="0 180 0"></a-videosphere>
-    <a-camera>
-      <a-cursor color="#00d4ff"></a-cursor>
-    </a-camera>
+    <a-camera></a-camera>
   </a-scene>
 
   <script>
-    let playing = false;
     let vrActive = false;
-    const video = document.getElementById('video360');
-    const playPauseBtn = document.getElementById('playPauseBtn');
     const vrBtn = document.getElementById('vrBtn');
-    const vrHint = document.getElementById('vrHint');
+    const controls = document.getElementById('controls');
+    const header = document.getElementById('header');
+    const hint = document.getElementById('landscape-hint');
     const scene = document.getElementById('scene');
+    const video = document.getElementById('video360');
 
-    function startVideo() {
-      video.play();
-      playing = true;
-      document.getElementById('play-overlay').classList.add('hidden');
-      updatePlayBtn();
+    // Auto play
+    video.play().catch(() => {
+      document.addEventListener('touchstart', () => video.play(), { once: true });
+      document.addEventListener('click', () => video.play(), { once: true });
+    });
+
+    function enterVR() {
+      scene.enterVR();
+      vrActive = true;
+      controls.classList.add('hidden');
+      header.style.display = 'none';
+      hint.classList.add('hidden');
     }
 
-    function togglePlay() {
-      if (playing) {
-        video.pause();
-        playing = false;
-      } else {
-        video.play();
-        playing = true;
-      }
-      updatePlayBtn();
-    }
-
-    function updatePlayBtn() {
-      if (playing) {
-        playPauseBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Pauzeer`;
-      } else {
-        playPauseBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Afspelen`;
-      }
+    function exitVR() {
+      scene.exitVR();
+      vrActive = false;
+      controls.classList.remove('hidden');
+      header.style.display = 'flex';
+      hint.classList.remove('hidden');
     }
 
     function toggleVR() {
-      if (!vrActive) {
-        scene.enterVR();
-        vrActive = true;
-        vrBtn.classList.add('active');
-        vrBtn.textContent = '❌ Sluit VR';
-        vrHint.classList.add('visible');
-      } else {
-        scene.exitVR();
-        vrActive = false;
-        vrBtn.classList.remove('active');
-        vrBtn.textContent = '🥽 VR Modus';
-        vrHint.classList.remove('visible');
+      if (!vrActive) enterVR(); else exitVR();
+    }
+
+    // Landscape = VR aan, Portrait = VR uit
+    function checkOrientation() {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      if (isLandscape && !vrActive) {
+        enterVR();
+      } else if (!isLandscape && vrActive) {
+        exitVR();
       }
     }
 
-    // Luister ook naar VR events van A-Frame zelf
-    scene.addEventListener('enter-vr', () => {
-      vrActive = true;
-      vrBtn.classList.add('active');
-      vrBtn.textContent = '❌ Sluit VR';
-      vrHint.classList.add('visible');
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkOrientation, 300);
     });
+
     scene.addEventListener('exit-vr', () => {
       vrActive = false;
-      vrBtn.classList.remove('active');
-      vrBtn.textContent = '🥽 VR Modus';
-      vrHint.classList.remove('visible');
+      controls.classList.remove('hidden');
+      header.style.display = 'flex';
+      hint.classList.remove('hidden');
     });
+
+    // Verberg hint na 4 seconden
+    setTimeout(() => hint.classList.add('hidden'), 4000);
   </script>
 
 </body>
