@@ -4,14 +4,13 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>360° VR Experience</title>
+  <title>360° Experience</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #000; overflow: hidden; width: 100vw; height: 100vh; font-family: Arial, sans-serif; color: white; }
 
 ```
-/* START OVERLAY */
 #start-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background: #080c14;
@@ -31,12 +30,11 @@
 #start-overlay h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
 #start-overlay p { color: rgba(255,255,255,0.45); font-size: 0.82rem; line-height: 1.6; }
 
-/* HEADER */
 #header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 500;
   padding: 0.9rem 1.5rem;
   background: linear-gradient(to bottom, rgba(8,12,20,0.97) 60%, transparent);
-  display: none; align-items: center; gap: 0.8rem;
+  display: flex; align-items: center; gap: 0.8rem;
 }
 .badge {
   background: #00d4ff; color: #000;
@@ -46,10 +44,9 @@
 }
 #header h1 { font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; }
 
-/* PLAY/PAUSE */
 #bottom-bar {
   position: fixed; bottom: 1.8rem; left: 50%;
-  transform: translateX(-50%); z-index: 500; display: none;
+  transform: translateX(-50%); z-index: 500;
 }
 .btn-play {
   padding: 0.5rem 1.4rem; border-radius: 8px;
@@ -59,18 +56,7 @@
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 }
 
-/* PORTRAIT: normale scene */
-#portrait-view { position: fixed; inset: 0; display: none; }
-#portrait-view a-scene { width: 100% !important; height: 100% !important; }
-
-/* LANDSCAPE: VR split met lensvervorming via canvas */
-#vr-view {
-  position: fixed; inset: 0;
-  display: none; background: #000;
-}
-#vr-canvas { width: 100vw; height: 100vh; display: block; }
-
-/* Verberg A-Frame VR knop */
+a-scene { width: 100vw !important; height: 100vh !important; }
 .a-enter-vr-button { display: none !important; }
 ```
 
@@ -78,247 +64,72 @@
 </head>
 <body>
 
-  <!-- START -->
-
   <div id="start-overlay" onclick="startExperience()">
     <div class="tap-circle">
       <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
     </div>
-    <h2>360° VR Experience</h2>
-    <p>Tik om te starten<br/>Draai je telefoon voor VR modus</p>
+    <h2>360° Experience</h2>
+    <p>Tik om te starten<br/>Beweeg je telefoon om rond te kijken</p>
   </div>
-
-  <!-- HEADER -->
 
   <div id="header">
     <span class="badge">360°</span>
     <h1>Immersive Experience</h1>
   </div>
 
-  <!-- PLAY/PAUSE -->
-
   <div id="bottom-bar">
     <button class="btn-play" id="playBtn" onclick="togglePlay()">⏸ Pauzeer</button>
   </div>
 
-  <!-- PORTRAIT: A-Frame met gyro -->
-
-  <div id="portrait-view">
-    <a-scene id="portrait-scene" vr-mode-ui="enabled:false" embedded>
-      <a-assets>
-        <video id="vid-main" src="Nog.mp4" loop muted playsinline webkit-playsinline crossorigin="anonymous"></video>
-      </a-assets>
-      <a-videosphere src="#vid-main" rotation="0 180 0"></a-videosphere>
-      <a-camera
-        look-controls="enabled:true; magicWindowTrackingEnabled:true; pointerLockEnabled:false"
-        wasd-controls="enabled:false">
-      </a-camera>
-    </a-scene>
-  </div>
-
-  <!-- VR CANVAS voor barrel distortion -->
-
-  <div id="vr-view">
-    <canvas id="vr-canvas"></canvas>
-  </div>
+  <a-scene vr-mode-ui="enabled:false" embedded>
+    <a-assets>
+      <video id="vid"
+        src="Nog.mp4"
+        loop muted
+        playsinline webkit-playsinline
+        crossorigin="anonymous">
+      </video>
+    </a-assets>
+    <a-videosphere src="#vid" rotation="0 180 0"></a-videosphere>
+    <a-camera
+      look-controls="enabled:true; magicWindowTrackingEnabled:true; touchEnabled:true; pointerLockEnabled:false"
+      wasd-controls="enabled:false"
+      position="0 0 0">
+    </a-camera>
+  </a-scene>
 
   <script>
-    const vidMain   = document.getElementById('vid-main');
-    const portraitV = document.getElementById('portrait-view');
-    const vrView    = document.getElementById('vr-view');
-    const header    = document.getElementById('header');
-    const bottomBar = document.getElementById('bottom-bar');
-    const playBtn   = document.getElementById('playBtn');
-    const startOv   = document.getElementById('start-overlay');
-    const canvas    = document.getElementById('vr-canvas');
-    const ctx       = canvas.getContext('2d');
+    const vid     = document.getElementById('vid');
+    const playBtn = document.getElementById('playBtn');
+    const overlay = document.getElementById('start-overlay');
+    let playing   = false;
 
-    let playing = false;
-    let inVR    = false;
-    let started = false;
-    let animFrame = null;
-
-    // Gyro voor VR modus
-    let alpha = 0, beta = 90, gamma = 0;
-    let yaw = 0, pitch = 0;
-
-    // Offscreen video renderer voor VR canvas
-    let offscreen = document.createElement('canvas');
-    let offCtx = offscreen.getContext('2d');
-
-    /* ── GYRO ── */
-    function requestGyro() {
+    function startExperience() {
+      // iOS vereist gebruikersinteractie + toestemming gyro
       if (typeof DeviceOrientationEvent !== 'undefined' &&
           typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
-          .then(r => { if (r === 'granted') listenGyro(); })
-          .catch(console.error);
-      } else {
-        listenGyro();
+          .then(res => {
+            if (res === 'granted') console.log('Gyro toegestaan');
+          }).catch(console.error);
       }
-    }
 
-    function listenGyro() {
-      window.addEventListener('deviceorientation', e => {
-        alpha = e.alpha || 0;
-        beta  = e.beta  || 90;
-        gamma = e.gamma || 0;
-        // Convert to yaw/pitch for VR canvas panning
-        yaw   = ((alpha / 360) * Math.PI * 2);
-        pitch = ((beta - 90) / 180) * Math.PI;
-      });
-    }
-
-    /* ── START ── */
-    function startExperience() {
-      vidMain.muted = true;
-      vidMain.play().then(() => {
+      vid.muted = true;
+      vid.play().then(() => {
         playing = true;
-        started = true;
         updateBtn();
-        startOv.classList.add('hidden');
-        requestGyro();
-        checkOrientation();
+        overlay.classList.add('hidden');
       }).catch(e => console.log('play error:', e));
     }
 
-    /* ── PLAY/PAUSE ── */
     function togglePlay() {
-      if (playing) { vidMain.pause(); playing = false; }
-      else         { vidMain.play();  playing = true;  }
+      if (playing) { vid.pause(); playing = false; }
+      else         { vid.play();  playing = true;  }
       updateBtn();
     }
+
     function updateBtn() {
       playBtn.textContent = playing ? '⏸ Pauzeer' : '▶ Afspelen';
-    }
-
-    /* ── ORIENTATION ── */
-    function checkOrientation() {
-      if (!started) return;
-      let landscape;
-      if (screen.orientation) {
-        landscape = screen.orientation.type.includes('landscape');
-      } else {
-        landscape = window.innerWidth > window.innerHeight;
-      }
-      landscape ? showVR() : showPortrait();
-    }
-
-    function showPortrait() {
-      if (!inVR && started) {
-        portraitV.style.display = 'block';
-        header.style.display    = 'flex';
-        bottomBar.style.display = 'block';
-        return;
-      }
-      if (!inVR) return;
-      inVR = false;
-      cancelAnimationFrame(animFrame);
-      vrView.style.display    = 'none';
-      portraitV.style.display = 'block';
-      header.style.display    = 'flex';
-      bottomBar.style.display = 'block';
-    }
-
-    function showVR() {
-      if (inVR) return;
-      inVR = true;
-      portraitV.style.display = 'none';
-      header.style.display    = 'none';
-      bottomBar.style.display = 'none';
-      vrView.style.display    = 'block';
-      resizeCanvas();
-      renderVR();
-    }
-
-    /* ── VR CANVAS RENDER met barrel distortion ── */
-    function resizeCanvas() {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-      offscreen.width  = window.innerWidth;
-      offscreen.height = window.innerHeight;
-    }
-
-    function renderVR() {
-      if (!inVR) return;
-      animFrame = requestAnimationFrame(renderVR);
-
-      const W = canvas.width;
-      const H = canvas.height;
-      const halfW = W / 2;
-
-      // Draw video to offscreen
-      offCtx.drawImage(vidMain, 0, 0, offscreen.width, offscreen.height);
-
-      // Draw left and right eye with barrel distortion
-      drawEye(ctx, offCtx, 0,     0, halfW, H, -0.0);
-      drawEye(ctx, offCtx, halfW, 0, halfW, H, -0.0);
-
-      // Divider
-      ctx.fillStyle = '#000';
-      ctx.fillRect(halfW - 1, 0, 2, H);
-    }
-
-    function drawEye(ctx, src, x, y, w, h) {
-      // Sample the equirectangular video and apply circular barrel mask
-      const imageData = ctx.createImageData(w, h);
-      const srcCanvas = src.canvas;
-      const srcW = srcCanvas.width;
-      const srcH = srcCanvas.height;
-
-      // Get source pixels
-      const srcData = src.getImageData(0, 0, srcW, srcH);
-
-      const cx = w / 2;
-      const cy = h / 2;
-      const R  = Math.min(cx, cy) * 0.95;
-      const k1 = 0.22; // barrel distortion strength
-
-      for (let py = 0; py < h; py++) {
-        for (let px = 0; px < w; px++) {
-          const nx = (px - cx) / R;
-          const ny = (py - cy) / R;
-          const r2 = nx * nx + ny * ny;
-
-          if (r2 > 1) continue; // outside lens circle
-
-          // Barrel distortion correction
-          const r = Math.sqrt(r2);
-          const distort = 1 + k1 * r2;
-          const sx = nx / distort;
-          const sy = ny / distort;
-
-          // Convert to equirectangular UV
-          // Add gyro yaw offset
-          let u = (Math.atan2(sx, Math.sqrt(1 - sx*sx - sy*sy)) / Math.PI + yaw / (Math.PI * 2) + 0.5) % 1;
-          let v = (Math.asin(Math.max(-1, Math.min(1, sy))) / Math.PI + 0.5 + pitch / Math.PI);
-          v = Math.max(0, Math.min(1, v));
-          if (u < 0) u += 1;
-
-          const srcX = Math.floor(u * srcW);
-          const srcY = Math.floor(v * srcH);
-          const si = (srcY * srcW + srcX) * 4;
-          const di = (py * w + px) * 4;
-
-          imageData.data[di]     = srcData.data[si];
-          imageData.data[di + 1] = srcData.data[si + 1];
-          imageData.data[di + 2] = srcData.data[si + 2];
-          imageData.data[di + 3] = 255;
-        }
-      }
-
-      ctx.putImageData(imageData, x, y);
-    }
-
-    /* ── EVENTS ── */
-    window.addEventListener('resize', () => {
-      setTimeout(() => {
-        resizeCanvas();
-        checkOrientation();
-      }, 300);
-    });
-    if (screen.orientation) {
-      screen.orientation.addEventListener('change', () => setTimeout(checkOrientation, 400));
     }
   </script>
 
