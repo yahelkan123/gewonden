@@ -4,178 +4,267 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
   <title>360° Experience</title>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe.min.js"></script>
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #000; overflow: hidden; width: 100vw; height: 100vh; font-family: Arial, sans-serif; color: white; }
-
-    #start-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: #080c14;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      cursor: pointer; text-align: center; padding: 2rem;
-    }
-    #start-overlay.hidden { display: none; }
-    .tap-circle {
-      width: 90px; height: 90px; border-radius: 50%;
-      background: #00d4ff;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 1.2rem;
-      box-shadow: 0 0 50px rgba(0,212,255,0.5);
-    }
-    .tap-circle svg { width: 38px; height: 38px; fill: #000; margin-left: 7px; }
-    #start-overlay h2 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    #start-overlay p { color: rgba(255,255,255,0.45); font-size: 0.82rem; line-height: 1.6; }
-
-    #header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
-      padding: 0.9rem 1.5rem;
-      background: linear-gradient(to bottom, rgba(8,12,20,0.97) 60%, transparent);
-      display: flex; align-items: center; gap: 0.8rem;
-    }
-    .badge {
-      background: #00d4ff; color: #000;
-      font-size: 0.6rem; font-weight: 700;
-      letter-spacing: 0.12em; padding: 0.25rem 0.6rem;
-      border-radius: 2px; text-transform: uppercase;
-    }
-    #header h1 { font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; }
-
-    #bottom-bar {
-      position: fixed; bottom: 1.8rem; left: 50%;
-      transform: translateX(-50%); z-index: 500;
-    }
-    .btn-play {
-      padding: 0.5rem 1.4rem; border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.25);
-      font-size: 0.82rem; font-weight: 600; cursor: pointer;
-      background: rgba(0,0,0,0.5); color: white;
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
     }
 
-    a-scene { width: 100vw !important; height: 100vh !important; }
-    .a-enter-vr-button { display: none !important; }
+    body{
+      background:#000;
+      overflow:hidden;
+      width:100vw;
+      height:100vh;
+      font-family:Arial,sans-serif;
+      color:white;
+    }
+
+    #start-overlay{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      background:#080c14;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      text-align:center;
+      padding:2rem;
+    }
+
+    #start-overlay.hidden{
+      display:none;
+    }
+
+    .tap-circle{
+      width:90px;
+      height:90px;
+      border-radius:50%;
+      background:#00d4ff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom:1.2rem;
+      box-shadow:0 0 50px rgba(0,212,255,0.5);
+    }
+
+    .tap-circle svg{
+      width:38px;
+      height:38px;
+      fill:#000;
+      margin-left:7px;
+    }
+
+    #start-overlay h2{
+      font-size:1.5rem;
+      margin-bottom:0.5rem;
+    }
+
+    #start-overlay p{
+      color:rgba(255,255,255,0.45);
+      font-size:0.82rem;
+      line-height:1.6;
+    }
+
+    #header{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      z-index:500;
+      padding:0.9rem 1.5rem;
+      background:linear-gradient(to bottom, rgba(8,12,20,0.97) 60%, transparent);
+      display:flex;
+      align-items:center;
+      gap:0.8rem;
+    }
+
+    .badge{
+      background:#00d4ff;
+      color:#000;
+      font-size:0.6rem;
+      font-weight:700;
+      letter-spacing:0.12em;
+      padding:0.25rem 0.6rem;
+      border-radius:2px;
+      text-transform:uppercase;
+    }
+
+    #header h1{
+      font-size:1.1rem;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+    }
+
+    #bottom-bar{
+      position:fixed;
+      bottom:1.8rem;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:500;
+    }
+
+    .btn-play{
+      padding:0.5rem 1.4rem;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.25);
+      font-size:0.82rem;
+      font-weight:600;
+      cursor:pointer;
+      background:rgba(0,0,0,0.5);
+      color:white;
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+    }
+
+    a-scene{
+      width:100vw !important;
+      height:100vh !important;
+    }
+
+    .a-enter-vr-button{
+      display:none !important;
+    }
   </style>
 </head>
+
 <body>
 
-  <div id="start-overlay" onclick="startExperience()">
-    <div class="tap-circle">
-      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-    </div>
-    <h2>360° Experience</h2>
-    <p>Tik om te starten<br/>Beweeg je telefoon om rond te kijken</p>
+<div id="start-overlay" onclick="startExperience()">
+  <div class="tap-circle">
+    <svg viewBox="0 0 24 24">
+      <path d="M8 5v14l11-7z"/>
+    </svg>
   </div>
 
-  <div id="header">
-    <span class="badge">360°</span>
-    <h1>Immersive Experience</h1>
-  </div>
+  <h2>360° Experience</h2>
 
-  <div id="bottom-bar">
-    <button class="btn-play" id="playBtn" onclick="togglePlay()">⏸ Pauzeer</button>
-  </div>
+  <p>
+    Tik om te starten<br>
+    Draai je telefoon of iPad om rond te kijken
+  </p>
+</div>
 
-  <a-scene vr-mode-ui="enabled:false" embedded>
-    <a-assets>
-      <video id="vid" src="Nog.mp4" loop muted playsinline webkit-playsinline crossorigin="anonymous"></video>
-    </a-assets>
-    <a-videosphere src="#vid" rotation="0 180 0"></a-videosphere>
-    <a-camera
-      id="cam"
-      look-controls="enabled:false"
-      wasd-controls="enabled:false"
-      position="0 0 0">
-    </a-camera>
-  </a-scene>
+<div id="header">
+  <span class="badge">360°</span>
+  <h1>Immersive Experience</h1>
+</div>
 
-  <script>
-    const vid     = document.getElementById('vid');
-    const playBtn = document.getElementById('playBtn');
-    const overlay = document.getElementById('start-overlay');
-    const cam     = document.getElementById('cam');
-    let playing   = false;
-    let gyroActive = false;
+<div id="bottom-bar">
+  <button class="btn-play" id="playBtn" onclick="togglePlay()">
+    ⏸ Pauzeer
+  </button>
+</div>
 
-    // Gyro waarden
-    let currentAlpha = 0;
-    let currentBeta  = 90;
-    let currentGamma = 0;
+<a-scene
+  vr-mode-ui="enabled:false"
+  embedded
+  device-orientation-permission-ui="enabled:false"
+>
+  <a-assets>
+    <video
+      id="vid"
+      src="Nog.mp4"
+      loop
+      muted
+      playsinline
+      webkit-playsinline
+      crossorigin="anonymous"
+    ></video>
+  </a-assets>
 
-    // Handmatig gyro uitlezen en camera draaien
-    function onOrientation(e) {
-      currentAlpha = e.alpha || 0;
-      currentBeta  = e.beta  || 90;
-      currentGamma = e.gamma || 0;
+  <a-videosphere
+    src="#vid"
+    rotation="0 180 0"
+  ></a-videosphere>
 
-      // Zet om naar A-Frame rotatie afhankelijk van schermoriëntatie
-      let x, y, z;
-      const orient = screen.orientation ? screen.orientation.angle : window.orientation || 0;
+  <!-- BELANGRIJK:
+       look-controls AAN laten.
+       Daarmee draait de camera automatisch mee
+       met je iPad/telefoon gyro.
+  -->
+  <a-camera
+    id="cam"
+    look-controls="enabled:true; magicWindowTrackingEnabled:true"
+    wasd-controls="enabled:false"
+    position="0 0 0"
+  ></a-camera>
+</a-scene>
 
-      if (orient === 0 || orient === 180) {
-        // Portrait
-        x = currentBeta  - 90;
-        y = -currentAlpha;
-        z = currentGamma;
-      } else {
-        // Landscape
-        x = currentGamma;
-        y = -currentAlpha;
-        z = -(currentBeta - 90);
+<script>
+  const vid = document.getElementById('vid');
+  const playBtn = document.getElementById('playBtn');
+  const overlay = document.getElementById('start-overlay');
+
+  let playing = false;
+
+  async function startExperience() {
+
+    // iPhone / iPad gyro permissie
+    if (
+      typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function'
+    ) {
+      try {
+        const permission =
+          await DeviceOrientationEvent.requestPermission();
+
+        if (permission !== 'granted') {
+          alert('Gyro toestemming geweigerd');
+          return;
+        }
+      } catch (err) {
+        console.error(err);
       }
-
-      cam.setAttribute('rotation', { x: x, y: y, z: z });
     }
 
-    function startGyro() {
-      if (typeof DeviceOrientationEvent !== 'undefined' &&
-          typeof DeviceOrientationEvent.requestPermission === 'function') {
-        // iOS 13+
-        DeviceOrientationEvent.requestPermission()
-          .then(res => {
-            if (res === 'granted') {
-              window.addEventListener('deviceorientation', onOrientation, true);
-              gyroActive = true;
-            }
-          })
-          .catch(console.error);
-      } else {
-        // Android / desktop
-        window.addEventListener('deviceorientation', onOrientation, true);
-        gyroActive = true;
-      }
-    }
-
-    function startExperience() {
-      // Eerst gyro toestemming vragen (iOS vereist dit bij gebruikersinteractie)
-      startGyro();
-
+    try {
       vid.muted = true;
-      vid.play().then(() => {
-        playing = true;
-        updateBtn();
-        overlay.classList.add('hidden');
-      }).catch(() => {
-        setTimeout(() => {
-          vid.play();
-          playing = true;
-          updateBtn();
-          overlay.classList.add('hidden');
-        }, 300);
-      });
-    }
 
-    function togglePlay() {
-      if (playing) { vid.pause(); playing = false; }
-      else         { vid.play();  playing = true;  }
+      await vid.play();
+
+      playing = true;
+
       updateBtn();
+
+      overlay.classList.add('hidden');
+
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function togglePlay() {
+
+    if (playing) {
+      vid.pause();
+      playing = false;
+    } else {
+      vid.play();
+      playing = true;
     }
 
-    function updateBtn() {
-      playBtn.textContent = playing ? '⏸ Pauzeer' : '▶ Afspelen';
-    }
-  </script>
+    updateBtn();
+  }
+
+  function updateBtn() {
+    playBtn.textContent =
+      playing ? '⏸ Pauzeer' : '▶ Afspelen';
+  }
+
+  // Zorg dat scene goed resize't bij draaien scherm
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 300);
+  });
+
+</script>
 
 </body>
 </html>
